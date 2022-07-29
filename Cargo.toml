@@ -6,3 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+enable-ansi-support = "0.1.2"
+whoami = "1.2.1"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
