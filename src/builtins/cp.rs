@@ -8,7 +8,8 @@ pub fn main(command: crate::parser::Command) {
         return;
     }
 
-    let path = std::path::Path::new(&command.args[0]);
+    let path0 = command.args[0].replace("~", &std::env::home_dir().unwrap().display().to_string());
+    let path = std::path::Path::new(&path0);
 
     if !path.exists() {
         println!("\x1b[31mFile or Directory \"{}\" does not exist.\x1b[0m",
@@ -17,13 +18,7 @@ pub fn main(command: crate::parser::Command) {
         return;
     }
 
-    let path = std::path::Path::new(&command.args[1]);
+    let path1 = command.args[1].replace("~", &std::env::home_dir().unwrap().display().to_string());
 
-    if !path.exists() {
-        println!("\x1b[31mFile or Directory \"{}\" does not exist.\x1b[0m",
-            command.args[1].clone()
-        );
-        return;
-    }
-    copy(command.args[0].clone(), command.args[1].clone()).unwrap();
+    copy(path0, path1).unwrap();
 }

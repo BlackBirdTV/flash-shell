@@ -7,5 +7,8 @@ pub fn main(command: crate::parser::Command) {
         );
         return;
     }
-    create_dir_all(command.args[0].clone()).unwrap();
+
+    let path = command.args[0].replace("~", &std::env::home_dir().unwrap().display().to_string());
+
+    create_dir_all(path).unwrap();
 }

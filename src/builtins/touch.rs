@@ -7,6 +7,10 @@ pub fn main(command: crate::parser::Command) {
         );
         return;
     }
+
+    let filename = command.args[0].replace("~", &std::env::home_dir().unwrap().display().to_string());
+    let path = std::path::Path::new(&filename);
+
     let mut text = String::new();
     let mut buffer = String::new();
     let stdin = std::io::stdin();
@@ -22,5 +26,6 @@ pub fn main(command: crate::parser::Command) {
         text = format!("{text}{buffer}");
         buffer = String::new();
     }
-    write(command.args[0].clone(), text).unwrap();
+
+    write(filename, text).unwrap();
 }

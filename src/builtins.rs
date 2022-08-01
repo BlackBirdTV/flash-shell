@@ -33,3 +33,12 @@ pub const MV: fn(crate::parser::Command) -> () = mv::main;
 
 mod rm;
 pub const RM: fn(crate::parser::Command) -> () = rm::main;
+
+mod less;
+pub const LESS: fn(crate::parser::Command) -> () = less::main;
+
+mod head;
+pub const HEAD: fn(crate::parser::Command) -> () = head::main;
+
+mod tail;
+pub const TAIL: fn(crate::parser::Command) -> () = tail::main;

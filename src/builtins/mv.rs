@@ -5,24 +5,25 @@ pub fn main(command: crate::parser::Command) {
         );
         return;
     }
-
-    let path = std::path::Path::new(&command.args[0]);
+    let path0 = command.args[0].replace("~", &std::env::home_dir().unwrap().display().to_string());
+    let path = std::path::Path::new(&path0);
 
     if !path.exists() {
-        println!("\x1b[31mDirectory \"{}\" does not exist.\x1b[0m",
+        println!("\x1b[31mFile or Directory \"{}\" does not exist.\x1b[0m",
             command.args[0].clone()
         );
         return;
     }
 
-    let path = std::path::Path::new(&command.args[1]);
+    let path1 = command.args[1].replace("~", &std::env::home_dir().unwrap().display().to_string());
+    let path = std::path::Path::new(&path1);
 
-    if !path.exists() {
-        println!("\x1b[31mDirectory \"{}\" does not exist.\x1b[0m",
+    if path.exists() {
+        println!("\x1b[31mFile or Directory \"{}\" already exists.\x1b[0m",
             command.args[1].clone()
         );
         return;
     }
 
-    std::fs::rename(command.args[0].clone(), command.args[1].clone()).unwrap();
+    std::fs::rename(path0, path1).unwrap();
 }

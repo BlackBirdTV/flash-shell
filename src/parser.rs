@@ -2,7 +2,8 @@ pub fn parse(inp: String) -> Command {
     let mut outp = Command {
         action: String::new(),
         args: vec![],
-        flags: vec![]
+        flags: vec![],
+        full: inp.clone()
     };
 
     let mut buf = String::new();
@@ -53,7 +54,8 @@ pub fn parse(inp: String) -> Command {
 pub struct Command {
     pub action: String,
     pub args: Vec<String>,
-    pub flags: Vec<String>
+    pub flags: Vec<String>,
+    pub full: String
 }
 
 impl Command {
@@ -64,5 +66,14 @@ impl Command {
             }
         }
         false
+    }
+
+    pub fn clone(&self) -> Command {
+        Command {
+            action: self.action.clone(),
+            args: self.args.clone(),
+            flags: self.flags.clone(),
+            full: self.full.clone(),
+        }
     }
 }
