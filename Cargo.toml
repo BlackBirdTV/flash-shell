@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ctrlc = "3.2.2"
 enable-ansi-support = "0.1.2"
+psutil = "3.2.2"
 whoami = "1.2.1"
 
 [target.'cfg(windows)'.build-dependencies]

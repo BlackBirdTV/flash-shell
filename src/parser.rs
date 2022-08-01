@@ -1,42 +1,68 @@
 pub fn parse(inp: String) -> Command {
-	let mut outp = Command {
-		action: String::new(),
-		args: vec![]
-	};
+    let mut outp = Command {
+        action: String::new(),
+        args: vec![],
+        flags: vec![]
+    };
 
-	let mut vec = vec![];
+    let mut buf = String::new();
 
-	let mut buf = String::new();
+    let mut in_str = false;
 
-	let mut in_str = false;
+    for c in inp.chars() {
+        if c == '"' {
+            in_str = !in_str;
+            if !in_str {
+                if buf.starts_with("-") && buf.len() == 2 {
+                    outp.flags.push(buf[1..].to_owned());
+                }
+                else {
+                    outp.args.push(buf.clone());
+                }
+                buf = String::new();
+            }
+        }
+        else if !in_str && c == ' ' {
+            if buf.starts_with("-") && buf.len() == 2 {
+                outp.flags.push(buf[1..].to_owned());
+            }
+            else {
+                outp.args.push(buf.clone());
+            }
+            buf = String::new();
+        }
+        else {
+            buf.push((&c).to_owned());
+        }
+    }
+    if buf.starts_with("-") && buf.len() == 2 {
+        outp.flags.push(buf[1..].to_owned());
+    }
+    else {
+        outp.args.push(buf.clone());
+    }
 
-	for c in inp.chars() {
-		if c == '"' {
-			in_str = !in_str;
-			if !in_str {
-				vec.push(buf.clone());
-				buf = String::new();
-			}
-		}
-		else if !in_str && c == ' ' {
-			vec.push(buf.clone());
-			buf = String::new();
-		}
-		else {
-			buf.push((&c).to_owned());
-		}
-	}
-	vec.push(buf.clone());
+    if outp.args.len() > 0 {
+        outp.action = outp.args[0].clone();
+        outp.args = outp.args[1..].to_vec();
+    }
 
-	if vec.len() > 0 {
-		outp.action = vec[0].clone();
-		outp.args = vec[1..].to_vec();
-	}
-
-	outp
+    outp
 }
 
 pub struct Command {
-	pub action: String,
-	pub args: Vec<String>
+    pub action: String,
+    pub args: Vec<String>,
+    pub flags: Vec<String>
+}
+
+impl Command {
+    pub fn contains_flag(&self, flag: &str) -> bool {
+        for o in &self.flags {
+            if o == flag {
+                return true;
+            }
+        }
+        false
+    }
 }
