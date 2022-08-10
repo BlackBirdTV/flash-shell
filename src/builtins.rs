@@ -1,8 +1,5 @@
-#[path = "parser.rs"]
-mod parser;
-
 mod info;
-pub const INFO: fn(crate::parser::Command) -> () = info::main;
+pub const INFO: unsafe fn(crate::parser::Command) -> () = info::main;
 
 mod ls;
 pub const LS: fn(crate::parser::Command) -> () = ls::main;

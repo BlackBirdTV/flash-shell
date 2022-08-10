@@ -6,5 +6,5 @@ pub fn main(command: crate::parser::Command) {
             print!(" ");
         }
     }
-    if !command.contains_flag("c") { println!(); }
+    if !command.contains_flag("c") { println!("\r"); }
 }

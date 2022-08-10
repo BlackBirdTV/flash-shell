@@ -2,30 +2,13 @@ use std::fs::{write};
 
 pub fn main(command: crate::parser::Command) {
     if command.args.len() != 1 {
-        println!("\x1b[31mExpected 1 argument but received {}\x1b[0m",
+        println!("\x1b[31mExpected 1 argument but received {}\x1b[0m\r",
             command.args.len()
         );
         return;
     }
 
-    let filename = command.args[0].replace("~", &std::env::home_dir().unwrap().display().to_string());
-    let path = std::path::Path::new(&filename);
+    let filename = command.args[0].replace("~", &crate::utils::home_dir());
 
-    let mut text = String::new();
-    let mut buffer = String::new();
-    let stdin = std::io::stdin();
-    println!(":w to write and exit, :q to discard and exit");
-    loop {
-        stdin.read_line(&mut buffer).expect("Failed to read from stdin");
-        if buffer == ":w\n" {
-            break;
-        }
-        else if buffer == ":q\n" {
-            return;
-        }
-        text = format!("{text}{buffer}");
-        buffer = String::new();
-    }
-
-    write(filename, text).unwrap();
+    write(filename, "").unwrap();
 }
