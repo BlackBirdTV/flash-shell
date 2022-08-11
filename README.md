@@ -8,3 +8,12 @@ Flash is a modern cross-platform shell built for simplicity and ease-of-use. It 
 ## Changelog
 - Changed from hlua to rlua (includes standard library)
 - Changed from rust stdin to crossterm
+
+## Roadmap
+- thunder (TUI Editor)
+- Piping stdout to files
+- Piping stdout to other commands
+- Running Commands in paralell
+- Running commands after each other
+- Variables
+- Math
