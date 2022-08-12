@@ -42,6 +42,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "clone-into-box"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "651300078001f556f7e35e291a545ac1a01fcc409848fb63ff1f89e09d45fda6"
+
+[[package]]
 name = "crossterm"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -110,6 +116,7 @@ dependencies = [
 name = "flash-shell"
 version = "0.1.0"
 dependencies = [
+ "clone-into-box",
  "crossterm",
  "enable-ansi-support",
  "psutil",

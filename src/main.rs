@@ -3,12 +3,11 @@ mod builtins;
 mod colors;
 mod utils;
 
-use std::io::{self, Write};
+use std::io::{self, Write, Stdout};
 use std::env::{current_dir, current_exe};
-use parser::{parse};
-use rlua::Lua;
+use parser::{parse, CommandAction};
+use rlua::{Lua, Table};
 
-//importing in execute! macro
 #[macro_use]
 extern crate crossterm;
 
@@ -26,7 +25,7 @@ pub static mut BLUE: &str = "";
 pub static mut RESET: &str = "";
 pub static mut BOLD: &str = "";
 
-const CHARS: &str = "aäbcdefghijklmnoöpqrstuüvwxyzAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890.;:_^°, -+#*'~|<>!\"§$%&/()=?`´{[]}\\";
+const CHARS: &str = "aäbcdefghijklmnoöpqrstuüvwxyzAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890.;:_^°, -+#*'~|<>!\"§$%&/()=?`´{[]}\\@";
 
 fn main() {
 
@@ -39,9 +38,13 @@ fn main() {
             BOLD = colors::BOLD;
             RESET = colors::RESET;
         }
-        Err(_) => {
-            // TODO: Disable ANSI
-            println!("This OS doesn't support ANSI Escape Codes. Be aware, that this might led to inconveniences.")
+        Err(_) => unsafe {
+            RED = "";
+            GREEN = "";
+            BLUE = "";
+            BOLD = "";
+            RESET = "";
+            println!("This OS doesn't support ANSI Escape Codes. Be aware, that this might lead to inconveniences.")
         }
     }
 
@@ -67,6 +70,8 @@ fn main() {
         print!("{}", prompt);
         flush();
 
+        let mut i: usize = 0;
+
         loop {
             let key = read().unwrap();
 
@@ -76,20 +81,24 @@ fn main() {
                     modifiers: KeyModifiers::NONE
                 })
                 {
-                    buffer.push(c);
-                    execute!(stdout, Print(c)).unwrap();
+                    buffer.insert(i, c);
+                    if i > 0 {execute!(stdout, cursor::MoveLeft(i as u16)).unwrap();}
+                    execute!(stdout, Print(buffer.clone())).unwrap();
+                    if i < buffer.len() {execute!(stdout, cursor::MoveLeft((buffer.len() - i) as u16), cursor::MoveRight(1)).unwrap();}
+                    i+=1;
                     continue;
                 }
             }
 
             match key {
-                Event::Key(KeyEvent { 
+                Event::Key(KeyEvent {  
                     code: KeyCode::Backspace, 
                     modifiers: KeyModifiers::NONE 
                 }) => {
-                    if buffer.len() > 0 {
-                        execute!(stdout, cursor::MoveLeft(1), Print(r#" "#), cursor::MoveLeft(1)).unwrap();
-                        buffer.pop();
+                    if buffer.len() > 0 && i > 0 {
+                        buffer.remove(i - 1);
+                        i-=1;
+                        execute!(stdout, cursor::MoveLeft(i as u16 + 1), Print(buffer.clone()), Print(r#" "#), cursor::MoveLeft((buffer.len() - i) as u16 + 1)).unwrap();
                     }
                 },
                 Event::Key(KeyEvent {
@@ -118,6 +127,7 @@ fn main() {
                     }
                     buffer = HISTORY[history_idx].full.clone();
                     execute!(stdout, Print(&buffer)).unwrap();
+                    i = buffer.len();
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Down,
@@ -131,23 +141,22 @@ fn main() {
                     }
                     buffer = HISTORY[history_idx].full.clone();
                     execute!(stdout, Print(&buffer)).unwrap();
+                    i = buffer.len();
                 },
                 Event::Key(KeyEvent { 
                     code: KeyCode::Left, 
                     modifiers: KeyModifiers::NONE
-                }) => {
-                //    println!("{} : {}", cursor::position().unwrap().0, prompt.len() as u16 );
-                if cursor::position().unwrap().0 > prompt_unformatted.len() as u16  - 2{
+                }) => if cursor::position().unwrap().0 > prompt_unformatted.len() as u16  - 2{
                     execute!(stdout, cursor::MoveLeft(1)).unwrap();
-                }},
+                    i-=1;
+                },
                 Event::Key(KeyEvent { 
                     code: KeyCode::Right, 
                     modifiers: KeyModifiers::NONE
-                }) => {
-                //    println!("{} : {}", cursor::position().unwrap().0, prompt.len() as u16 );
-                if cursor::position().unwrap().0 < prompt_unformatted.len() as u16 + buffer.len() as u16 - 2{
+                }) => if cursor::position().unwrap().0 < prompt_unformatted.len() as u16 + buffer.len() as u16 - 2{
                     execute!(stdout, cursor::MoveRight(1)).unwrap();
-                }},
+                    i+=1;
+                },
                 Event::Key(KeyEvent {
                     code: KeyCode::Esc,
                     modifiers: KeyModifiers::NONE
@@ -170,7 +179,7 @@ fn main() {
             continue;
         }
 
-        if exec(buffer.clone(), &mut stdout) { break }
+        if exec(buffer.clone(), Vec::new(), &mut stdout) { break }
         history_idx = HISTORY.len();
 
         // Flush buffer
@@ -187,26 +196,32 @@ fn flush() {
     io::stdout().flush().unwrap()
 }
 
-unsafe fn exec(inp: String, _stdout: &mut io::Stdout) -> bool {
-    let command = parse(inp);
+fn exec(inp: String, args: Vec<String>, stdout: &mut io::Stdout) -> bool {
+    let mut command = parse(inp);
+    if args.len() > 0 {
+        command.args = args;
+    }
+    run_command(command, stdout)
+}
 
+fn run_command(command: parser::Command, stdout: &mut Stdout) -> bool {
     match command.clone().action.as_str() {
-        "echo" => builtins::ECHO(command.clone()),
-        "cd" => builtins::CD(command.clone()),
-        "cp" => builtins::CP(command.clone()),
-        "mkdir" => builtins::MKDIR(command.clone()),
-        "touch" => builtins::TOUCH(command.clone()),
-        "mv" => builtins::MV(command.clone()),
-        "clear" => builtins::CLEAR(command.clone()),
-        "ls"=> builtins::LS(command.clone()),
-        "info" => builtins::INFO(command.clone()),
-        "pwd" => builtins::PWD(command.clone()),
-        "rm" => builtins::RM(command.clone()),
-        "less" => builtins::LESS(command.clone()),
-        "head" => builtins::HEAD(command.clone()),
-        "tail" => builtins::TAIL(command.clone()),
-        "HISTORY" => {
-            for o in (&HISTORY).to_owned() {
+        "echo" => builtins::ECHO(command.clone(), stdout),
+        "cd" => builtins::CD(command.clone(), stdout),
+        "cp" => builtins::CP(command.clone(), stdout),
+        "mkdir" => builtins::MKDIR(command.clone(), stdout),
+        "touch" => builtins::TOUCH(command.clone(), stdout),
+        "mv" => builtins::MV(command.clone(), stdout),
+        "clear" => builtins::CLEAR(command.clone(), stdout),
+        "ls"=> builtins::LS(command.clone(), stdout),
+        "info" => unsafe { builtins::INFO(command.clone(), stdout) },
+        "pwd" => builtins::PWD(command.clone(), stdout),
+        "rm" => builtins::RM(command.clone(), stdout),
+        "less" => builtins::LESS(command.clone(), stdout),
+        "head" => builtins::HEAD(command.clone(), stdout),
+        "tail" => builtins::TAIL(command.clone(), stdout),
+        "history" => {
+            for o in unsafe{&HISTORY}.to_owned() {
                 println!("{}\r", o.full);
             }
         },
@@ -219,40 +234,92 @@ unsafe fn exec(inp: String, _stdout: &mut io::Stdout) -> bool {
             if std::path::Path::new(&format!("{}/exts/{}/main.lua", current_exe, command.action)).exists() {
 
                 // If it does, run it with Lua
-                // TODO: Run it with real Lua bc hlua doesn't implement the standard library
 
-                let mut lua = Lua::new();
+                let lua = Lua::new();
+                let command = command.clone();
                 
                 lua.context(|lua_ctx| {
                     let globals = lua_ctx.globals();
-            
-                    let args = lua_ctx.create_table().unwrap();
-                    for (i, s) in command.args.iter().enumerate() {
-                        args.set(i+1, s.to_owned().as_str()).expect("Unable to set global 'args'");
-                    }
-                    globals.set("args", args).unwrap();
+                    
+                    globals.set("command", command_to_table(lua_ctx, command.clone())).expect("Unable to setup Lua binding");
+                    
+                    let run_command = lua_ctx.create_function(|_, command: Table| {
+                        
+                        run_command(table_to_command(command), &mut io::stdout());
+                        
+                        Ok(())
+                    }).unwrap();
 
-                    let flags = lua_ctx.create_table().unwrap();
-                    for (i, s) in command.flags.iter().enumerate() {
-                        flags.set(i+1, s.to_owned().as_str()).expect("Unable to set global 'flags'");
-                    }
-                    globals.set("flags", flags).unwrap();
-            
+
+                    globals.set("runCommand", run_command).expect("Unable to setup Lua binding");
+
+
                     lua_ctx
                         .load(
                             &std::fs::read_to_string(&format!("{}/exts/{}/main.lua", current_exe, command.action)).unwrap_or(String::new())
                         )
                         .set_name("command").unwrap()
                         .exec()
-                        .expect("Error running module");
+                        .expect("Error running command");
                 });
             }
             else {
-                println!("{RED}Unknown command: {}\r", command.action.as_str());
+                unsafe{println!("{RED}Unknown command: {}\r", command.action.as_str());}
             }
         }
     }
 
-    HISTORY.push(command);
+    unsafe{HISTORY.push(command);}
     false
+}
+
+fn command_to_table(lua_ctx: rlua::Context, command: parser::Command) -> rlua::Table {
+    let command_table = lua_ctx.create_table().unwrap();
+    let args_table = lua_ctx.create_table().unwrap();
+    for (i, arg) in command.args.iter().enumerate() {args_table.set(i+1, arg.to_owned()).expect("Unable to setup Lua binding");}
+    let flags_table = lua_ctx.create_table().unwrap();
+    for (i, flag) in command.args.iter().enumerate() {flags_table.set(i+1, flag.to_owned()).expect("Unable to setup Lua binding");}
+    let followed_action_table = lua_ctx.create_table().unwrap();
+    followed_action_table.set(1, match command.followed_action {
+        CommandAction::PipeFile(_) => "PipeFile",
+        CommandAction::PipeCommand(_) => "PipeCommand",
+        CommandAction::FollowCommand(_) => "FollowCommand",
+        CommandAction::ParallelCommand(_) => "ParallelCommand",
+        _ => "None"
+    }).expect("Unable to setup Lua binding");
+
+    match command.followed_action {
+        CommandAction::PipeFile(path) => followed_action_table.set(2, path).expect("Unable to setup Lua binding"),
+        CommandAction::PipeCommand(cmd) => followed_action_table.set(2, command_to_table(lua_ctx, *cmd)).expect("Unable to setup Lua binding"),
+        CommandAction::FollowCommand(cmd) => followed_action_table.set(2, command_to_table(lua_ctx, *cmd)).expect("Unable to setup Lua binding"),
+        CommandAction::ParallelCommand(cmd) => followed_action_table.set(2, command_to_table(lua_ctx, *cmd)).expect("Unable to setup Lua binding"),
+        _ => followed_action_table.set(2, rlua::Nil).expect("Unable to setup Lua binding")
+    }
+
+    command_table.set("action", command.action).expect("Unable to setup Lua binding");
+    command_table.set("full", command.full).expect("Unable to setup Lua binding");
+    command_table.set("args", args_table).expect("Unable to setup Lua binding");
+    command_table.set("flags", flags_table).expect("Unable to setup Lua binding");
+    command_table.set("followedAction", followed_action_table).expect("Unable to setup Lua binding");
+
+    command_table
+}
+
+fn table_to_command(command: Table) -> parser::Command {
+    let followed_action: rlua::prelude::LuaTable<> = command.get("followedAction").unwrap();
+    parser::Command {
+        action: command.get("action").unwrap_or(String::new()),
+        full: command.get("full").unwrap_or(String::new()),
+        args: command.get("args").unwrap_or(Vec::new()),
+        flags: command.get("flags").unwrap_or(Vec::new()),
+        followed_action: match followed_action.get(1).unwrap_or(String::new()).as_str() {
+            "PipeFile" => CommandAction::PipeFile(
+                followed_action.get(2).unwrap_or(String::new())
+            ),
+            "PipeCommand" => CommandAction::PipeCommand(Box::new(table_to_command(followed_action.get(2).unwrap()))),
+            "FollowCommand" => CommandAction::FollowCommand(Box::new(table_to_command(followed_action.get(2).unwrap()))),
+            "ParallelCommand" => CommandAction::ParallelCommand(Box::new(table_to_command(followed_action.get(2).unwrap()))),
+            _ => CommandAction::NONE
+        }
+    }
 }
