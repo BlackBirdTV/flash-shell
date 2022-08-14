@@ -16,9 +16,11 @@ current dir: & ls`)
 - The 4 previously mentioned operators can also be chained. (e.g. `echo Local dir's contents: & pwd | ls`)
 
 ## Roadmap
-- thunder (TUI Editor)
 - Variables
 - Math
+
+## Canceled / Moved
+- thunder (TUI Editor): Thunder is going to be moved into it's own project. It is too big for including it in flash. However, I will finish Flash 1.0 and maybe another secret project before thunder, it's hard to make somethung better than neovim ;)
 
 ## Lua Integration
 In order to write commands for flash, you'll have to use Lua. However, not plain lua, you have a few things at your disposal:

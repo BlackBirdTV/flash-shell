@@ -5,6 +5,7 @@ mod utils;
 
 use std::io::{self, Write, Stdout};
 use std::env::{current_dir, current_exe};
+use std::thread;
 use parser::{parse, CommandAction};
 use rlua::{Lua, Table};
 
@@ -27,8 +28,13 @@ pub static mut BOLD: &str = "";
 
 const CHARS: &str = "aäbcdefghijklmnoöpqrstuüvwxyzAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890.;:_^°, -+#*'~|<>!\"§$%&/()=?`´{[]}\\@";
 
-fn main() {
+pub enum Variable {
+    Number(f32),
+    String(String),
+    Bool(bool)
+}
 
+fn main() {
     // Enable ANSI Support for the old Windows Shell. If it fails, disable ANSI Colors.
     match enable_ansi_support::enable_ansi_support() {
         Ok(()) => unsafe {
@@ -220,11 +226,42 @@ fn run_command(command: parser::Command, stdout: &mut Stdout) -> bool {
         "less" => builtins::LESS(command.clone(), stdout),
         "head" => builtins::HEAD(command.clone(), stdout),
         "tail" => builtins::TAIL(command.clone(), stdout),
-        "history" => {
-            for o in unsafe{&HISTORY}.to_owned() {
+        "history" => match command.followed_action.clone() {
+            CommandAction::PipeFile(filename) => {
+                let mut history: Vec<String> = Vec::new();
+                for o in unsafe{&HISTORY}.to_owned() {
+                    history.push(format!("{}\n", o.full));
+                }
+                std::fs::write(filename, utils::combine(history, " ")).expect("Unable to write to file");
+            }
+            CommandAction::PipeCommand(cmd) => {
+                let mut history: Vec<String> = Vec::new();
+                for o in unsafe{&HISTORY}.to_owned() {
+                    history.push(format!("{}\n", o.full));
+                }
+                let mut cmd = *cmd;
+                cmd.args = history;
+                run_command(cmd, stdout);
+            }
+            CommandAction::ParallelCommand(cmd) => {
+                let thread = thread::spawn(|| {
+                    run_command(*cmd, &mut io::stdout());
+                });
+                for o in unsafe{&HISTORY}.to_owned() {
+                    println!("{}\r", o.full);
+                }
+                thread.join().unwrap();
+            }
+            CommandAction::FollowCommand(cmd) => {
+                for o in unsafe{&HISTORY}.to_owned() {
+                    println!("{}\r", o.full);
+                }
+                run_command(*cmd, &mut io::stdout());
+            }
+            _ => for o in unsafe{&HISTORY}.to_owned() {
                 println!("{}\r", o.full);
             }
-        },
+        }
         "exit" => {return true}
         _ => {
 

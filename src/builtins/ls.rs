@@ -1,4 +1,4 @@
-use std::{fs::{read_dir}, io::Stdout, time::Duration};
+use std::{fs::{read_dir}, io::Stdout};
 use std::thread;
 use std::io;
 
