@@ -3,6 +3,7 @@ mod builtins;
 mod colors;
 mod utils;
 
+use std::collections::HashMap;
 use std::io::{self, Write, Stdout};
 use std::env::{current_dir, current_exe};
 use std::thread;
@@ -12,12 +13,37 @@ use rlua::{Lua, Table};
 #[macro_use]
 extern crate crossterm;
 
+#[macro_use]
+extern crate lazy_static;
+
 use crossterm::cursor::{self};
 use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 
+use std::sync::Mutex;
+
+pub enum Variable {
+    Num(f32),
+    Str(String),
+    Bool(bool)
+}
+
+impl Variable {
+    pub fn to_string(&self) -> String {
+        match self {
+            Variable::Num(value) => value.to_string(),
+            Variable::Str(string) => string.to_owned(),
+            Variable::Bool(value) => value.to_string(),
+        }
+    }
+}
+
 static mut HISTORY: Vec<parser::Command> = Vec::new();
+
+lazy_static! {
+    static ref VARIABLES: Mutex<HashMap<String, Variable>> = Mutex::new(HashMap::new());
+}
 
 pub const PLATFORM: &str = "unix";
 pub static mut RED: &str = "";
@@ -26,15 +52,10 @@ pub static mut BLUE: &str = "";
 pub static mut RESET: &str = "";
 pub static mut BOLD: &str = "";
 
-const CHARS: &str = "aäbcdefghijklmnoöpqrstuüvwxyzAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890.;:_^°, -+#*'~|<>!\"§$%&/()=?`´{[]}\\@";
-
-pub enum Variable {
-    Number(f32),
-    String(String),
-    Bool(bool)
-}
+const CHARS: &str = "abcdefghijklmnopqrstuüvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.;:_^, -+#*'~|<>!\"$%&/()=?`{[]}\\@";
 
 fn main() {
+    VARIABLES.lock().unwrap().insert("1".to_owned(), Variable::Str("Hello, world!".to_owned()));
     // Enable ANSI Support for the old Windows Shell. If it fails, disable ANSI Colors.
     match enable_ansi_support::enable_ansi_support() {
         Ok(()) => unsafe {
@@ -207,6 +228,7 @@ fn exec(inp: String, args: Vec<String>, stdout: &mut io::Stdout) -> bool {
     if args.len() > 0 {
         command.args = args;
     }
+
     run_command(command, stdout)
 }
 
@@ -226,6 +248,7 @@ fn run_command(command: parser::Command, stdout: &mut Stdout) -> bool {
         "less" => builtins::LESS(command.clone(), stdout),
         "head" => builtins::HEAD(command.clone(), stdout),
         "tail" => builtins::TAIL(command.clone(), stdout),
+        "var" => builtins::VAR(command.clone(), stdout, &mut VARIABLES.lock().unwrap()),
         "history" => match command.followed_action.clone() {
             CommandAction::PipeFile(filename) => {
                 let mut history: Vec<String> = Vec::new();

@@ -6,17 +6,9 @@
 Flash is a modern cross-platform shell built for simplicity and ease-of-use. It will definitely run on Windows, Linux and Redox/chronoOS and will most likely have a release for macOS, though untested.
 
 ## Changelog
-- Changed from hlua to rlua (includes standard library)
-- Changed from rust stdin to crossterm
-- Added piping stdout to files using the > operator (e.g. `echo Hello, world > helloworld.txt`)
-- Added piping stdout to other commands using the | operator (e.g. `pwd | ls`)
-- Added running commands after each other using the & operator (e.g. `echo The Contents of the 
-current dir: & ls`)
-- Added running Commands in parallel using the ~ operator (e.g. `ls ~ echo Hi Mom`)
-- The 4 previously mentioned operators can also be chained. (e.g. `echo Local dir's contents: & pwd | ls`)
+- Added Variables (declare with the `var {name} {value}`, get value by prefixing it with a `$` (e.g. `echo $my_variable`))
 
 ## Roadmap
-- Variables
 - Math
 
 ## Canceled / Moved

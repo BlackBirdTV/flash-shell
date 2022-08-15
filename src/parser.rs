@@ -45,7 +45,10 @@ pub fn parse(inp: String) -> Command {
                 if buf.starts_with("-") && buf.len() == 2 {
                     outp.flags.push(buf[1..].to_owned());
                 }
-                else {
+                else if buf.starts_with("$") && crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) {
+                    outp.args.push(crate::VARIABLES.lock().unwrap().get(&buf[1..].to_owned()).unwrap().to_string())
+                }
+                else if buf.replace(" ", "").len() > 0 {
                     outp.args.push(buf.clone());
                 }
                 buf = String::new();
@@ -54,6 +57,9 @@ pub fn parse(inp: String) -> Command {
         else if !any && c == ' ' {
             if buf.starts_with("-") && buf.len() == 2 {
                 outp.flags.push(buf[1..].to_owned());
+            }
+            else if buf.starts_with("$") && crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) {
+                outp.args.push(crate::VARIABLES.lock().unwrap().get(&buf[1..].to_owned()).unwrap().to_string())
             }
             else if buf.replace(" ", "").len() > 0 {
                 outp.args.push(buf.clone());
@@ -64,6 +70,9 @@ pub fn parse(inp: String) -> Command {
             pipe_file = true;
             if buf.starts_with("-") && buf.len() == 2 {
                 outp.flags.push(buf[1..].to_owned());
+            }
+            else if buf.starts_with("$") && crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) {
+                outp.args.push(crate::VARIABLES.lock().unwrap().get(&buf[1..].to_owned()).unwrap().to_string())
             }
             else if buf.replace(" ", "").len() > 0 {
                 outp.args.push(buf.clone());
@@ -101,7 +110,10 @@ pub fn parse(inp: String) -> Command {
     else if buf.starts_with("-") && buf.len() == 2 {
         outp.flags.push(buf[1..].to_owned());
     }
-    else {
+    else if buf.starts_with("$") && crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) {
+        outp.args.push(crate::VARIABLES.lock().unwrap().get(&buf[1..].to_owned()).unwrap().to_string())
+    }
+    else if buf.replace(" ", "").len() > 0 {
         outp.args.push(buf.clone());
     }
 

@@ -1,4 +1,4 @@
-use std::io::Stdout;
+use std::{io::Stdout};
 
 mod info;
 pub const INFO: unsafe fn(crate::parser::Command, &mut Stdout) -> () = info::main;
@@ -41,3 +41,6 @@ pub const HEAD: fn(crate::parser::Command, &mut Stdout) -> () = head::main;
 
 mod tail;
 pub const TAIL: fn(crate::parser::Command, &mut Stdout) -> () = tail::main;
+
+mod var;
+pub const VAR: fn(crate::parser::Command, &mut Stdout, &mut crate::HashMap<String, crate::Variable>) -> () = var::main;

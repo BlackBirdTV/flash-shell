@@ -30,3 +30,11 @@ pub fn trim(inp: String) -> String {
 
     outp
 }
+
+pub fn is_numeric(value: String) -> bool {
+    for c in value.chars() {
+        if !c.is_numeric() && c != '.' { return false; }
+    }
+    true
+}
+
