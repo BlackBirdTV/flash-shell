@@ -2,6 +2,7 @@ mod parser;
 mod builtins;
 mod colors;
 mod utils;
+mod actions;
 
 use std::collections::HashMap;
 use std::io::{self, Write, Stdout};
@@ -224,7 +225,10 @@ fn flush() {
 }
 
 fn exec(inp: String, args: Vec<String>, stdout: &mut io::Stdout) -> bool {
-    let mut command = parse(inp);
+    let mut command = match parse(inp) {
+        Some(res) => res,
+        _ => return false
+    };
     if args.len() > 0 {
         command.args = args;
     }

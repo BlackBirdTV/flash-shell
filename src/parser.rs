@@ -1,4 +1,5 @@
 use crate::utils;
+use crate::actions::exec_action;
 
 pub enum CommandAction {
     PipeFile(String),
@@ -20,7 +21,7 @@ impl Clone for CommandAction {
     }
 }
 
-pub fn parse(inp: String) -> Command {
+pub fn parse(inp: String) -> Option<Command> {
     let mut outp = Command {
         action: String::new(),
         args: vec![],
@@ -32,13 +33,14 @@ pub fn parse(inp: String) -> Command {
     let mut buf = String::new();
 
     let mut in_str = false;
+    let mut in_action = false;
     let mut pipe_file = false;
     let mut pipe_command = String::new();
     let mut parallel_command = String::new();
     let mut follow_command = String::new();
 
     for (i, c) in inp.chars().enumerate() {
-        let any = pipe_file || in_str;
+        let any = pipe_file || in_str || in_action;
         if c == '"' {
             in_str = !in_str;
             if !in_str {
@@ -51,6 +53,17 @@ pub fn parse(inp: String) -> Command {
                 else if buf.replace(" ", "").len() > 0 {
                     outp.args.push(buf.clone());
                 }
+                buf = String::new();
+            }
+        }
+        else if c == '%' {
+            in_action = !in_action;
+            if !in_action {
+                let action = buf.split(":").collect::<Vec<_>>();
+                outp.args.push(match exec_action(action[0].to_owned(), action[1].to_owned()) {
+                    Some(res) => res,
+                    _ => return None
+                });
                 buf = String::new();
             }
         }
@@ -99,13 +112,22 @@ pub fn parse(inp: String) -> Command {
         outp.followed_action = CommandAction::PipeFile(utils::trim(buf.clone()));
     }
     else if pipe_command.len() > 0 {
-        outp.followed_action = CommandAction::PipeCommand(Box::new(parse(utils::trim(pipe_command.clone()))));
+        outp.followed_action = CommandAction::PipeCommand(Box::new(match parse(utils::trim(pipe_command.clone())) {
+            Some(res) => res,
+            _ => return None
+        }));
     }
     else if follow_command.len() > 0 {
-        outp.followed_action = CommandAction::FollowCommand(Box::new(parse(utils::trim(follow_command.clone()))));
+        outp.followed_action = CommandAction::FollowCommand(Box::new(match parse(utils::trim(follow_command.clone())) {
+            Some(res) => res,
+            _ => return None
+        }));
     }
     else if parallel_command.len() > 0 {
-        outp.followed_action = CommandAction::ParallelCommand(Box::new(parse(utils::trim(parallel_command.clone()))));
+        outp.followed_action = CommandAction::ParallelCommand(Box::new(match parse(utils::trim(parallel_command.clone())) {
+            Some(res) => res,
+            _ => return None
+        }));
     }
     else if buf.starts_with("-") && buf.len() == 2 {
         outp.flags.push(buf[1..].to_owned());
@@ -122,7 +144,7 @@ pub fn parse(inp: String) -> Command {
         outp.args = outp.args[1..].to_vec();
     }
 
-    outp
+    Some(outp)
 }
 
 pub struct Command {

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 crossterm = "0.24.0"
 enable-ansi-support = "0.1.2"
+fasteval = "0.2.4"
 lazy_static = "1.4.0"
 psutil = "3.2.2"
 rlua = "0.19.4"
