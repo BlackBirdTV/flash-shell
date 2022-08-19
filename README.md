@@ -6,10 +6,10 @@
 Flash is a modern cross-platform shell built for simplicity and ease-of-use. It will definitely run on Windows, Linux and Redox/chronoOS and will most likely have a release for macOS, though untested.
 
 ## Changelog
-- Added Variables (declare with the `var {name} {value}`, get value by prefixing it with a `$` (e.g. `echo $my_variable`))
+- Added Math (Use the `calc` action: `echo %calc: 3 + 4 * 2 ^ 2 ^ 3%`. You can also include Variables: `var my_var 3 & echo %calc:$my_var * 2%`)
 
 ## Roadmap
-- Math
+- Add Parenthesies to the calc action
 
 ## Canceled / Moved
 - thunder (TUI Editor): Thunder is going to be moved into it's own project. It is too big for including it in flash. However, I will finish Flash 1.0 and maybe another secret project before thunder, it's hard to make somethung better than neovim ;)

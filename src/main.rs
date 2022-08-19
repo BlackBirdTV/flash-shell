@@ -195,6 +195,7 @@ fn main() {
                         execute!(stdout,  cursor::MoveLeft(buffer.len() as u16)).unwrap();
                     }
                     buffer = "".to_owned();
+                    i = 0;
                     execute!(stdout, Print(&buffer)).unwrap();
                 },
                 _ => ()
