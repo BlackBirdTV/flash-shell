@@ -20,7 +20,9 @@ pub fn exec_action(action: String, inp: String) -> Option<String> {
 
 enum Token {
     Number(f64),
-    Operator(char)
+    Operator(char),
+    OpenBracket,
+    CloseBracket
 }
 
 impl Clone for Token {
@@ -28,6 +30,8 @@ impl Clone for Token {
         match self {
             Token::Number(num) => Token::Number(num.clone()),
             Token::Operator(c) => Token::Operator(c.clone()),
+            Token::OpenBracket => Token::OpenBracket,
+            Token::CloseBracket => Token::CloseBracket
         }
     }
 }
@@ -51,14 +55,15 @@ fn eval(inp: String) -> Option<f64> {
                 let num1 = numbers.pop().unwrap();
                 let num2 = numbers.pop().unwrap();
                 numbers.push(match op {
-                    '+' => num1 + num2,
-                    '-' => num1 - num2,
-                    '*' => num1 * num2,
-                    '/' => num1 / num2,
+                    '+' => num2 + num1,
+                    '-' => num2 - num1,
+                    '*' => num2 * num1,
+                    '/' => num2 / num1,
                     '^' => num2.powf(num1),
                     _ => 0.0 // Impossible
                 })
-            }
+            },
+            _ => () // Impossible
         }
     }
 
@@ -70,7 +75,45 @@ fn tokenise(inp: String) -> Option<Vec<Token>> {
     let mut buf = String::new();
 
     for c in inp.chars() {
-        if "+-*/^".contains(c) {
+        if c == '(' { 
+            if buf.len() > 0 {
+                outp.push(if buf.starts_with("$") {
+                    if !crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) { return None; }
+                    Token::Number(match crate::VARIABLES.lock().unwrap().get(&buf[1..].to_owned()).unwrap().to_owned() {
+                        Variable::Num(res) => res.to_owned() as f64,
+                        _ => return None
+                    })
+                }
+                else {
+                    match utils::is_numeric(buf.clone()) {
+                        true => Token::Number(buf.parse::<f64>().unwrap()),
+                        _ => return None
+                    }
+                });
+            } 
+            buf = String::new();
+            outp.push(Token::OpenBracket) 
+        }
+        else if c == ')' { 
+            if buf.len() > 0 {
+                outp.push(if buf.starts_with("$") {
+                    if !crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) { return None; }
+                    Token::Number(match crate::VARIABLES.lock().unwrap().get(&buf[1..].to_owned()).unwrap().to_owned() {
+                        Variable::Num(res) => res.to_owned() as f64,
+                        _ => return None
+                    })
+                }
+                else {
+                    match utils::is_numeric(buf.clone()) {
+                        true => Token::Number(buf.parse::<f64>().unwrap()),
+                        _ => return None
+                    }
+                });
+            } 
+            buf = String::new();
+            outp.push(Token::CloseBracket) 
+        }
+        else if "+-*/^".contains(c) {
             if buf.len() > 0 {
                 outp.push(if buf.starts_with("$") {
                     if !crate::VARIABLES.lock().unwrap().contains_key(&buf[1..].to_owned()) { return None; }
@@ -124,14 +167,27 @@ fn shunting_yard(inp: Vec<Token>) -> Option<Vec<Token>> {
                 for t in ops.clone().iter().rev() {
                     let tc = match t {
                         Token::Operator(c) => c.to_owned(),
+                        Token::OpenBracket => '(',
                         _ => return None// Impossible
                     };
                     if c_presedence < get_precedence(tc) || (c_presedence == get_precedence(tc) && c != '^') {
                         outp.push(ops.pop().unwrap());
                     }
+                    else { break; }
                 } 
                 ops.push(t);
-            }
+            },
+            Token::OpenBracket => {
+                ops.push(t);
+            },
+            Token::CloseBracket => {
+                for t in ops.clone().iter().rev() {
+                    match t {
+                        Token::OpenBracket => {ops.pop(); break;}
+                        _ => outp.push(ops.pop().unwrap())
+                    }
+                } 
+            },
         }
     }
     while ops.len() > 0 {
