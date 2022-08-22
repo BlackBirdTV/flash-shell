@@ -1,16 +1,16 @@
 <p align="center">
   <img src="logo.png" />
+  
 </p>
 
 # FLASH
 Flash is a modern cross-platform shell built for simplicity and ease-of-use. It will definitely run on Windows, Linux and Redox/chronoOS and will most likely have a release for macOS, though untested.
 
 ## Changelog
-- Added Parenthesies to the calc action
+- Added execution of extern programs
 
 ## Roadmap
-- Add execution of system executables
-- Release flash 1.0 :)
+- Release flash 1.0
 
 ## Canceled / Moved
 - thunder (TUI Editor): Thunder is going to be moved into it's own project. It is too big for including it in flash. However, I will finish Flash 1.0 and maybe another secret project before thunder, it's hard to make somethung better than neovim ;)

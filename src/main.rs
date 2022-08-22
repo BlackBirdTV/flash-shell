@@ -53,7 +53,7 @@ pub static mut BLUE: &str = "";
 pub static mut RESET: &str = "";
 pub static mut BOLD: &str = "";
 
-const CHARS: &str = "abcdefghijklmnopqrstuüvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.;:_^, -+#*'~|<>!\"$%&/()=?`{[]}\\@";
+const CHARS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.;:_^, -+#*'~|<>!\"$%&/()=?`{[]}\\@";
 
 fn main() {
     VARIABLES.lock().unwrap().insert("1".to_owned(), Variable::Str("Hello, world!".to_owned()));
@@ -190,9 +190,9 @@ fn main() {
                     modifiers: KeyModifiers::NONE
                 }) => {
                     if buffer.len() > 0 {
-                        execute!(stdout, cursor::MoveLeft((buffer.len()) as u16)).unwrap();
+                        if i > 0 { execute!(stdout, cursor::MoveLeft(i as u16)).unwrap(); }
                         for _ in 0..buffer.len() {execute!(stdout, Print(r#" "#)).unwrap();}
-                        execute!(stdout,  cursor::MoveLeft(buffer.len() as u16)).unwrap();
+                        execute!(stdout,  cursor::MoveLeft((buffer.len() - i) as u16)).unwrap();
                     }
                     buffer = "".to_owned();
                     i = 0;
@@ -329,7 +329,16 @@ fn run_command(command: parser::Command, stdout: &mut Stdout) -> bool {
                 });
             }
             else {
-                unsafe{println!("{RED}Unknown command: {}\r", command.action.as_str());}
+                let cmd = std::process::Command::new(command.action.clone())
+                .args(&command.full.split(' ').collect::<Vec<&str>>()[1..])
+                .spawn();
+                let mut join;
+                match cmd
+                {
+                    Ok(child) => { join = child; },
+                    Err(err) => unsafe{println!("{RED}Error while running \"{}\": {}\r", command.action.as_str(), err); return false; }
+                }
+                join.wait().expect("Error while running extern program");
             }
         }
     }
