@@ -1,6 +1,6 @@
 <p align="center">
   <img src="logo.png" />
-  
+  <!--<button style="padding: 1rem 3rem; font-size: 2rem; font-family: Arial, Helvetica, sans-serif; border-radius: 9999rem; border: none;background: #3a86ff; color: #fff; cursor: pointer;" @click="window.location.href='https://github.com/BlackBirdTV/flash-shell/releases/latest'">Download flash</button>-->
 </p>
 
 # FLASH
