@@ -42,21 +42,21 @@ pub fn main(command: crate::parser::Command, stdout: &mut Stdout) {
 
         },
         CommandAction::ParallelCommand(cmd) => {
-            // TODO
             ls(command);
             let thread1 = thread::spawn(|| {
                 crate::run_command(*cmd, &mut io::stdout());
             });
             thread1.join().unwrap();
         }
-        _ => {
-            ls(command)
-        }
+        _ => ls(command)
     }
 }
 
 fn ls(command: crate::parser::Command) {
-    let dir = get_dir(command.clone()).unwrap();
+    let dir = match get_dir(command.clone()) {
+        Ok(res) => res,
+        _ => return
+    };
     for path in dir {
         let path = path.unwrap().path();
         let name = path.display().to_string();
