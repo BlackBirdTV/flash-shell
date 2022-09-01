@@ -5,10 +5,10 @@ mod utils;
 mod actions;
 
 use std::collections::HashMap;
-use std::rc::Rc;
-use std::io::{self, Write, Stdout, Read};
+use std::io::{self, Write, Stdout};
 use std::env::{current_dir, current_exe};
 use std::thread;
+use crossterm::event::{Event, KeyModifiers, read, KeyEvent, KeyCode};
 use parser::{parse, CommandAction};
 use rlua::{Lua, Table};
 
@@ -18,9 +18,9 @@ extern crate crossterm;
 #[macro_use]
 extern crate lazy_static;
 
-use crossterm::cursor::{self};
+use crossterm::cursor;
 use crossterm::style::Print;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType, self};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 
 use std::sync::Mutex;
 
@@ -53,8 +53,6 @@ pub static mut BLUE: &str = "";
 pub static mut RESET: &str = "";
 pub static mut BOLD: &str = "";
 
-const CHARS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.^, -+#<;:_°*'`?=)(/&%$§\"!>";
-
 fn main() {
     VARIABLES.lock().unwrap().insert("1".to_owned(), Variable::Str("Hello, world!".to_owned()));
     // Enable ANSI Support for the old Windows Shell. If it fails, disable ANSI Colors.
@@ -77,7 +75,6 @@ fn main() {
     }
 
     let mut stdout = io::stdout();
-    let mut stdin = io::stdin();
     enable_raw_mode().unwrap();
 
     execute!(stdout, Clear(ClearType::All), cursor::MoveTo(0, 0))
@@ -95,98 +92,46 @@ fn main() {
 
         // Read input from user
         let prompt = format!("{BOLD}{GREEN}{user}@{pc_name}{RESET}:{BOLD}{BLUE}{path}{RESET}↯ ", path = path.clone().into_os_string().to_str().unwrap_or("?").replace(&utils::home_dir(), "~"));
+
+        let mut i = 0;
+        let mut i_utf8 = 0usize;
+
         print!("{}", prompt);
         flush();
 
-        let mut str_buf: Rc<String> = Rc::new(String::new());
-
-        let mut last_buf = [0u8];
-
-        let mut buf = [0u8];
-
-        loop {
-            let cursor_pos = cursor::position().unwrap();
-            let win_size = terminal::size().unwrap();
-            stdin.read(&mut buf).expect("Failed to read line");
-            match buf {
-                [3] => break,
-                [8] => if str_buf.len() > 0 {
-                    if cursor_pos.0 == 0 {
-                        execute!(stdout, cursor::MoveTo(win_size.0, cursor_pos.1 - 1), Print(" "), cursor::MoveRight(1)).expect("Stdout error"); // Just please don't ask how, but it works
-                    }
-                    else if cursor_pos.0 == win_size.0 {
-                        execute!(stdout, cursor::MoveRight(1), Print(" "), cursor::MoveRight(1)).expect("Stdout error");
-                    }
-                    else {
-                        execute!(stdout, cursor::MoveLeft(1), Print(" "), cursor::MoveLeft(1)).expect("Stdout error");
-                    }
-                    Rc::get_mut(&mut str_buf).unwrap().pop();
-                }
-                [13] => {
-                    println!("\r");
-                    if buffer.len() <= 0 {
-                        continue;
-                    }
-            
-                    if exec(buffer.clone(), Vec::new(), &mut stdout) { break; }
-                    history_idx = HISTORY.len();
-                    str_buf = Rc::new(String::new());
-                    buf = [0];
-                    print!("{}", prompt);
-                    flush();
-                }
-                _ => if CHARS.contains(buf[0] as char) || CHARS.contains(char::from_u32(((last_buf[0] as u32 & 0b00111111) << 6) | (buf[0] as u32 & 0b00111111)).unwrap()) {
-                    Rc::get_mut(&mut str_buf).unwrap().push(buf[0] as char);
-                    let endl;
-                    if cursor_pos.0 == win_size.0 - 1 {
-                        endl = true;
-                    }
-                    else {
-                        endl = false;
-                    }
-                    execute!(stdout, Print(buf[0] as char)).expect("Stdout error");
-                    if endl {
-                        execute!(stdout, cursor::MoveTo(0, cursor_pos.1 + 1)).expect("Stdout error");
-                    }
-                }
-            }
-            last_buf = buf;
-            let cursor_pos = cursor::position().unwrap();
-            execute!(stdout, cursor::MoveTo(0, win_size.1 - 1), Print(format!("{}x{} | {}, {}", win_size.0, win_size.1, cursor_pos.0, cursor_pos.1)), cursor::MoveTo(cursor_pos.0, cursor_pos.1)).expect("Stdout error");
-        }
-
-        /*
-        
-        --------- DEPRECATED BUT KEPT IN FOR REFERENCE ----------
-
         loop {
             let key = read().unwrap();
-
-            for c in CHARS.chars() {
-                if key == Event::Key(KeyEvent { 
-                    code: KeyCode::Char(c),
-                    modifiers: KeyModifiers::NONE
-                })
-                {
-                    buffer.insert(i, c);
-                    if i > 0 {execute!(stdout, cursor::MoveLeft(i as u16)).unwrap();}
-                    execute!(stdout, Print(buffer.clone())).unwrap();
-                    if i < buffer.len() {execute!(stdout, cursor::MoveLeft((buffer.len() - i) as u16), cursor::MoveRight(1)).unwrap();}
-                    i+=1;
-                    continue;
-                }
-            }
             
             match key {
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char(c),
+                    modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT
+                }) => {
+                    buffer.insert(i_utf8, c);
+                    let mut offset = 0;
+                    for t in buffer[i_utf8..].chars() { 
+                        execute!(stdout, Print(t)).expect("Stdout error");
+                        offset += t.len_utf8();
+                    }
+                    if buffer.len() - i > 0 { execute!(stdout, cursor::MoveLeft(offset as u16), cursor::MoveRight(c.len_utf8() as u16)).expect("Stdout error"); }
+                    i += 1;
+                    i_utf8 += c.len_utf8();
+                    continue;
+                },
                 Event::Key(KeyEvent {  
                     code: KeyCode::Backspace, 
                     modifiers: KeyModifiers::NONE 
-                }) => {
-                    if buffer.len() > 0 && i > 0 {
-                        buffer.remove(i - 1);
-                        i-=1;
-                        execute!(stdout, cursor::MoveLeft(i as u16 + 1), Print(buffer.clone()), Print(r#" "#), cursor::MoveLeft((buffer.len() - i) as u16 + 1)).unwrap();
-                    }
+                }) => if i > 0 && buffer.len() > 0 {
+                    execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
+                    i-=1;
+                    i_utf8 -= buffer.chars().nth(i).unwrap().len_utf8();
+
+                    let mut chars = buffer.chars().collect::<Vec<_>>();
+                    chars.remove(i);
+                    buffer = chars.clone().into_iter().collect();
+
+
+                    execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print(" "), cursor::RestorePosition).expect("Stdout error");
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
@@ -205,16 +150,21 @@ fn main() {
                 Event::Key(KeyEvent {
                     code: KeyCode::Up,
                     modifiers: KeyModifiers::NONE
-                }) => if history_idx > 0{
+                }) => if history_idx > 0 {
                     history_idx-=1;
                     if buffer.len() > 0 {
                         execute!(stdout, cursor::MoveLeft((buffer.len()) as u16)).unwrap();
-                        for _ in 0..buffer.len() {execute!(stdout, Print(r#" "#)).unwrap();}
+                        for _ in 0..buffer.len() {execute!(stdout, Print(" ")).unwrap();}
                         execute!(stdout,  cursor::MoveLeft(buffer.len() as u16)).unwrap();
                     }
                     buffer = HISTORY[history_idx].full.clone();
                     execute!(stdout, Print(&buffer)).unwrap();
                     i = buffer.len();
+                    let mut i_utf8_buf = 0;
+                    for c in buffer.chars() {
+                        i_utf8_buf += c.len_utf8();
+                    }
+                    i_utf8 = i_utf8_buf;
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Down,
@@ -233,16 +183,18 @@ fn main() {
                 Event::Key(KeyEvent { 
                     code: KeyCode::Left, 
                     modifiers: KeyModifiers::NONE
-                }) => if cursor::position().unwrap().0 > prompt_unformatted.len() as u16  - 2{
-                    execute!(stdout, cursor::MoveLeft(1)).unwrap();
-                    i-=1;
+                }) => if i > 0 {
+                    execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
+                    i -= 1;
+                    i_utf8 -= buffer.chars().nth(i).unwrap().len_utf8();
                 },
                 Event::Key(KeyEvent { 
                     code: KeyCode::Right, 
                     modifiers: KeyModifiers::NONE
-                }) => if cursor::position().unwrap().0 < prompt_unformatted.len() as u16 + buffer.len() as u16 - 2{
-                    execute!(stdout, cursor::MoveRight(1)).unwrap();
-                    i+=1;
+                }) => if i < buffer.chars().collect::<Vec<char>>().len() {
+                    execute!(stdout, cursor::MoveRight(1)).expect("Stdout error");
+                    i_utf8 += buffer.chars().nth(i).unwrap().len_utf8();
+                    i += 1;
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Esc,
@@ -250,7 +202,7 @@ fn main() {
                 }) => {
                     if buffer.len() > 0 {
                         if i > 0 { execute!(stdout, cursor::MoveLeft(i as u16)).unwrap(); }
-                        for _ in 0..buffer.len() {execute!(stdout, Print(r#" "#)).unwrap();}
+                        for _ in 0..buffer.len() {execute!(stdout, Print(" ")).unwrap();}
                         execute!(stdout,  cursor::MoveLeft((buffer.len() - i) as u16)).unwrap();
                     }
                     buffer = "".to_owned();
@@ -273,8 +225,6 @@ fn main() {
         // Flush buffer
         buffer = String::new();
         execute!(stdout, cursor::MoveLeft(cursor::position().unwrap_or((0, 0)).0)).unwrap();
-    }
-    */
     } }
 
     unsafe { print!("{RESET}"); }

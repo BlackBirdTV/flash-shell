@@ -7,16 +7,16 @@
 Flash is a modern cross-platform shell built for simplicity and ease-of-use. It will definitely run on Windows, Linux and Redox/chronoOS and will most likely have a release for macOS, though untested.
 
 ## Changelog
-- Added execution of extern programs
+- Fixed the input system
 
 ## Roadmap
-- Release flash 1.0
+- Release flash 0.1.0
 
 ## Canceled / Moved
 - thunder (TUI Editor): Thunder is going to be moved into it's own project. It is too big for including it in flash. However, I will finish Flash 1.0 and maybe another secret project before thunder, it's hard to make somethung better than neovim ;)
 
 ## Lua Integration
-In order to write commands for flash, you'll have to use Lua. However, not plain lua, you have a few things at your disposal:
+In order to write commands for flash properly, you'll have to use Lua. However, not plain lua, you have a few things at your disposal:
 
 - global `command`: This variable is a Table that is similar to the struct flash uses internally. It has a few members:
     - `action`: The command being executed
