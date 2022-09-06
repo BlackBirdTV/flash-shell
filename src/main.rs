@@ -64,12 +64,7 @@ fn main() {
             BOLD = colors::BOLD;
             RESET = colors::RESET;
         }
-        Err(_) => unsafe {
-            RED = "";
-            GREEN = "";
-            BLUE = "";
-            BOLD = "";
-            RESET = "";
+        Err(_) => {
             println!("This OS doesn't support ANSI Escape Codes. Be aware, that this might lead to inconveniences.")
         }
     }
@@ -104,23 +99,26 @@ fn main() {
             
             match key {
                 Event::Key(KeyEvent {
-                    code: KeyCode::Char(c),
-                    modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT
+                    code: KeyCode::Home,
+                    ..
+                }) => if i > 0 {
+                    execute!(stdout, cursor::MoveLeft(i as u16)).expect("Stdout error");
+                    i = 0usize;
+                    i_utf8 = 0;
+                }
+                Event::Key(KeyEvent {
+                    code: KeyCode::End,
+                    ..
                 }) => {
-                    buffer.insert(i_utf8, c);
-                    let mut offset = 0;
-                    for t in buffer[i_utf8..].chars() { 
-                        execute!(stdout, Print(t)).expect("Stdout error");
-                        offset += t.len_utf8();
-                    }
-                    if buffer.len() - i > 0 { execute!(stdout, cursor::MoveLeft(offset as u16), cursor::MoveRight(c.len_utf8() as u16)).expect("Stdout error"); }
-                    i += 1;
-                    i_utf8 += c.len_utf8();
-                    continue;
-                },
+                    let len = buffer.chars().count();
+                    let r = (len-i) as u16;
+                    if r > 0 { execute!(stdout, cursor::MoveRight(r)).expect("Stdout error"); }
+                    i = len;
+                    i_utf8 = buffer.len();
+                }
                 Event::Key(KeyEvent {  
                     code: KeyCode::Backspace, 
-                    modifiers: KeyModifiers::NONE 
+                    ..
                 }) => if i > 0 && buffer.len() > 0 {
                     execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
                     i-=1;
@@ -133,15 +131,26 @@ fn main() {
 
                     execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print(" "), cursor::RestorePosition).expect("Stdout error");
                 },
+                Event::Key(KeyEvent {  
+                    code: KeyCode::Delete, 
+                    ..
+                }) => if i < buffer.len() && buffer.len() > 0 {
+                    let mut chars = buffer.chars().collect::<Vec<_>>();
+                    chars.remove(i);
+                    buffer = chars.clone().into_iter().collect();
+
+                    execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print(" "), cursor::RestorePosition).expect("Stdout error");
+                },
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
-                    modifiers: KeyModifiers::NONE
+                    ..
                 }) => {
                     break;
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('c'),
-                    modifiers: KeyModifiers::CONTROL
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
                 }) => {
                     execute!(stdout, Clear(ClearType::All), cursor::MoveTo(0, 0)).unwrap();
                     disable_raw_mode().unwrap();
@@ -149,7 +158,7 @@ fn main() {
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Up,
-                    modifiers: KeyModifiers::NONE
+                    ..
                 }) => if history_idx > 0 {
                     history_idx-=1;
                     if buffer.len() > 0 {
@@ -168,7 +177,7 @@ fn main() {
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Down,
-                    modifiers: KeyModifiers::NONE
+                    ..
                 }) => if history_idx + 1 < HISTORY.len() {
                     history_idx+=1;
                     if buffer.len() > 0 {
@@ -182,7 +191,7 @@ fn main() {
                 },
                 Event::Key(KeyEvent { 
                     code: KeyCode::Left, 
-                    modifiers: KeyModifiers::NONE
+                    ..
                 }) => if i > 0 {
                     execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
                     i -= 1;
@@ -190,7 +199,7 @@ fn main() {
                 },
                 Event::Key(KeyEvent { 
                     code: KeyCode::Right, 
-                    modifiers: KeyModifiers::NONE
+                    ..
                 }) => if i < buffer.chars().collect::<Vec<char>>().len() {
                     execute!(stdout, cursor::MoveRight(1)).expect("Stdout error");
                     i_utf8 += buffer.chars().nth(i).unwrap().len_utf8();
@@ -198,7 +207,7 @@ fn main() {
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Esc,
-                    modifiers: KeyModifiers::NONE
+                    ..
                 }) => {
                     if buffer.len() > 0 {
                         if i > 0 { execute!(stdout, cursor::MoveLeft(i as u16)).unwrap(); }
@@ -209,6 +218,21 @@ fn main() {
                     i = 0;
                     execute!(stdout, Print(&buffer)).unwrap();
                 },
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char(c),
+                    ..
+                }) => {
+                    buffer.insert(i_utf8, c);
+                    let mut offset = 0;
+                    for t in buffer[i_utf8..].chars() { 
+                        execute!(stdout, Print(t)).expect("Stdout error");
+                        offset += t.len_utf8();
+                    }
+                    if buffer.len() - i > 0 { execute!(stdout, cursor::MoveLeft(offset as u16), cursor::MoveRight(c.len_utf8() as u16)).expect("Stdout error"); }
+                    i += 1;
+                    i_utf8 += c.len_utf8();
+                    continue;
+                }
                 _ => ()
             }
         }
