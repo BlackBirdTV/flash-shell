@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Page not found - flash shell Documentation</title>
-        <base href="/">
+        <title>Installation - flash shell Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -82,7 +81,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="using-flash.html"><strong aria-hidden="true">2.</strong> Usage</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="installation.html" class="active"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="using-flash.html"><strong aria-hidden="true">2.</strong> Command Line Usage</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -143,14 +142,25 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="document-not-found-404"><a class="header" href="#document-not-found-404">Document not found (404)</a></h1>
-<p>This URL is invalid, sorry. Please use the navigation bar or search to continue.</p>
+                        <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>Installing flash-shell is fairly easy. Simply follow your OS's respective guide below.</p>
+<h2 id="windows"><a class="header" href="#windows">Windows</a></h2>
+<p>To install flash-shell on windows, you just need to download the setup from <a href="https://github.com/BlackBirdTV/flash-shell/releases/latest/download/flash-shell-setup.exe?raw=true">here</a>. Next, run the setup, restart your machine and you're good to go!</p>
+<h2 id="linux"><a class="header" href="#linux">Linux</a></h2>
+<p>Installing flash is just as easy if not easier as on windows. You'll just need to run this command:</p>
+<pre><code class="language-sh">curl &quot;https://raw.githubusercontent.com/BlackBirdTV/flash-shell/main/setup.sh&quot; | sh
+</code></pre>
+<h2 id="macos"><a class="header" href="#macos">macOS</a></h2>
+<p>Until I've found a maintainer for the macOS Version, I'll not release flach on macOS.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
 
+                            <a rel="next" href="using-flash.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -159,26 +169,13 @@
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
 
+                    <a rel="next" href="using-flash.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
 
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
-            const socket = new WebSocket(wsAddress);
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
 
 
 

@@ -3,7 +3,8 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Installation - flash shell Documentation</title>
+        <title>flash shell Documentation</title>
+        <meta name="robots" content="noindex" />
 
 
         <!-- Custom HTML head -->
@@ -81,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="installation.html" class="active"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="using-flash.html"><strong aria-hidden="true">2.</strong> Usage</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="using-flash.html"><strong aria-hidden="true">2.</strong> Command Line Usage</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -150,15 +151,51 @@
 <p>Installing flash is just as easy if not easier as on windows. You'll just need to run this command:</p>
 <pre><code class="language-sh">curl &quot;https://raw.githubusercontent.com/BlackBirdTV/flash-shell/main/setup.sh&quot; | sh
 </code></pre>
+<h2 id="macos"><a class="header" href="#macos">macOS</a></h2>
+<p>Until I've found a maintainer for the macOS Version, I'll not release flach on macOS.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="command-line-usage"><a class="header" href="#command-line-usage">Command Line Usage</a></h1>
+<p>Flash is built for simplicity and ease-of-use while simultaneously being reliable and fast. A jack of all trades, if you want to say it that way. There's nothing that's not possible in flash. First of all, let's talk about the standard usecase of flash: as a command line. The next few chapters will individually explain the usage of each and every command flash has built in. However, you can also use flash like you would use cmd/bash. If flash doesn't know the command you typed in, it will automatically run it with your respective system shell.</p>
+<h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
+<h3 id="cd"><a class="header" href="#cd">cd</a></h3>
+<p>Change directory.</p>
+<h3 id="clear"><a class="header" href="#clear">clear</a></h3>
+<p>Clear the screen</p>
+<h3 id="cp"><a class="header" href="#cp">cp</a></h3>
+<p>Copy a file/directory from one place to another</p>
+<h3 id="echo"><a class="header" href="#echo">echo</a></h3>
+<p>Print a file to the stdout. Use <code>-c</code> to not break the line afterwards.</p>
+<h3 id="head"><a class="header" href="#head">head</a></h3>
+<p>Show the first ten lines of a file</p>
+<h3 id="info"><a class="header" href="#info">info</a></h3>
+<p>Show info about your flash version</p>
+<h3 id="less"><a class="header" href="#less">less</a></h3>
+<p>Display the contents of a file</p>
+<h3 id="ls"><a class="header" href="#ls">ls</a></h3>
+<p>List the current directory. Optionally, give a path to a directory that you want to list.</p>
+<h3 id="mkdir"><a class="header" href="#mkdir">mkdir</a></h3>
+<p>Create a directory</p>
+<h3 id="mv"><a class="header" href="#mv">mv</a></h3>
+<p>Move a file/directory from one path to another</p>
+<h3 id="pwd"><a class="header" href="#pwd">pwd</a></h3>
+<p>Print the working directory</p>
+<h3 id="rm"><a class="header" href="#rm">rm</a></h3>
+<p>Remove a directory/file. Use <code>-r</code> to remove a non-empty directory and all its contents.</p>
+<h3 id="tail"><a class="header" href="#tail">tail</a></h3>
+<p>Show the last 10 lines of a file</p>
+<h3 id="touch"><a class="header" href="#touch">touch</a></h3>
+<p>Create a file</p>
+<h3 id="var"><a class="header" href="#var">var</a></h3>
+<p>Declare a variable. Get its value by using <code>$varName</code></p>
+<h2 id="actions"><a class="header" href="#actions">Actions</a></h2>
+<p>Actions are like inline commands. They work by typint this: <code>%{command name}:{input}%</code>. E.g.: <code>%calc:1+1%</code></p>
+<h3 id="calc"><a class="header" href="#calc">calc</a></h3>
+<p>Calculate the input. Supports <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>^</code> and brackets.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
 
-                            <a rel="next" href="using-flash.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -167,29 +204,10 @@
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
 
-                    <a rel="next" href="using-flash.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
             </nav>
 
         </div>
 
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
-            const socket = new WebSocket(wsAddress);
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
 
 
 
@@ -208,6 +226,11 @@
 
         <!-- Custom JS scripts -->
 
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
 
     </body>
 </html>

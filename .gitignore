@@ -1,5 +1,4 @@
 target
 Output
-book/src
-book/book.toml
+book
 setup.iss
