@@ -11,6 +11,7 @@ crossterm = "0.25.0"
 enable-ansi-support = "0.1.2"
 lazy_static = "1.4.0"
 rlua = "0.19.4"
+strip-ansi-escapes = "0.1.1"
 whoami = "1.2.1"
 
 [target.'cfg(windows)'.build-dependencies]

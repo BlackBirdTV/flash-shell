@@ -18,7 +18,7 @@ extern crate crossterm;
 #[macro_use]
 extern crate lazy_static;
 
-use crossterm::cursor;
+use crossterm::{cursor, terminal};
 use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 
@@ -120,7 +120,12 @@ fn main() {
                     code: KeyCode::Backspace, 
                     ..
                 }) => if i > 0 && buffer.len() > 0 {
-                    execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
+                    if cursor::position().unwrap().0 == 0 {
+                        execute!(stdout, cursor::MoveToPreviousLine(1), cursor::MoveToColumn(10000)).expect("Stdout Error");
+                    }
+                    else {
+                        execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
+                    }
                     i-=1;
                     i_utf8 -= buffer.chars().nth(i).unwrap().len_utf8();
 
@@ -129,7 +134,7 @@ fn main() {
                     buffer = chars.clone().into_iter().collect();
 
 
-                    execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print(" "), cursor::RestorePosition).expect("Stdout error");
+                    execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print("  "), cursor::RestorePosition).expect("Stdout error");
                 },
                 Event::Key(KeyEvent {  
                     code: KeyCode::Delete, 
@@ -139,7 +144,7 @@ fn main() {
                     chars.remove(i);
                     buffer = chars.clone().into_iter().collect();
 
-                    execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print(" "), cursor::RestorePosition).expect("Stdout error");
+                    execute!(stdout, cursor::SavePosition, Print(chars[i..].into_iter().collect::<String>()), Print("  "), cursor::RestorePosition).expect("Stdout error");
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
@@ -193,7 +198,12 @@ fn main() {
                     code: KeyCode::Left, 
                     ..
                 }) => if i > 0 {
-                    execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
+                    if cursor::position().unwrap().0 == 0 {
+                        execute!(stdout, cursor::MoveToPreviousLine(1), cursor::MoveToColumn(10000)).expect("Stdout Error");
+                    }
+                    else {
+                        execute!(stdout, cursor::MoveLeft(1)).expect("Stdout error");
+                    }
                     i -= 1;
                     i_utf8 -= buffer.chars().nth(i).unwrap().len_utf8();
                 },
@@ -201,7 +211,12 @@ fn main() {
                     code: KeyCode::Right, 
                     ..
                 }) => if i < buffer.chars().collect::<Vec<char>>().len() {
-                    execute!(stdout, cursor::MoveRight(1)).expect("Stdout error");
+                    if cursor::position().unwrap().0 == terminal::size().unwrap().0 - 1 {
+                        execute!(stdout, cursor::MoveToNextLine(1)).expect("Stdout Error");
+                    }
+                    else {
+                        execute!(stdout, cursor::MoveRight(1)).expect("Stdout error");
+                    }
                     i_utf8 += buffer.chars().nth(i).unwrap().len_utf8();
                     i += 1;
                 },
@@ -224,11 +239,23 @@ fn main() {
                 }) => {
                     buffer.insert(i_utf8, c);
                     let mut offset = 0;
-                    for t in buffer[i_utf8..].chars() { 
+                    for t in buffer[i_utf8..].chars() {
                         execute!(stdout, Print(t)).expect("Stdout error");
                         offset += t.len_utf8();
                     }
-                    if buffer.len() - i > 0 { execute!(stdout, cursor::MoveLeft(offset as u16), cursor::MoveRight(c.len_utf8() as u16)).expect("Stdout error"); }
+                    
+                    if buffer.len() - i > 0 {
+                        for _ in 0..offset-c.len_utf8() {
+                            let cpos = cursor::position().unwrap();
+                            if cpos.0 == 0 {
+                                execute!(stdout, cursor::MoveToPreviousLine(1), cursor::MoveToColumn(10000)).expect("Stdout Error");
+                            }
+                            else {
+                                execute!(stdout, cursor::MoveLeft(1)).expect("Stdout Error");
+                            }
+                        }
+                    }
+                    
                     i += 1;
                     i_utf8 += c.len_utf8();
                     continue;
