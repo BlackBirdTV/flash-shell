@@ -7,10 +7,9 @@
 Flash is a modern cross-platform shell built for simplicity and ease-of-use. It will definitely run on Windows, Linux and Redox/chronoOS and will most likely have a release for macOS, though untested.
 
 ## Changelog
-- Improved the input system (Can now type all UTF-8 Characters, including multi-codepoint ones; Added Del, Home and End keys)
+- Fixed Input system
 
 ## Roadmap
-- Release flash 0.1.0
 
 ## Canceled / Moved
 - thunder (TUI Editor): Thunder is going to be moved into it's own project. It is too big for including it in flash. However, I will finish Flash 1.0 and maybe another secret project before thunder, it's hard to make somethung better than neovim ;)
