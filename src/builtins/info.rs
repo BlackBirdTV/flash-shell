@@ -48,7 +48,7 @@ fn get_info() -> String {
                 ...               {BOLD}║{RESET}                          {BOLD}║{RESET}\r
               .....               {BOLD}║{RESET}        FLASH SHELL       {BOLD}║{RESET}\r
             ......                {BOLD}║{RESET}                          {BOLD}║{RESET}\r
-          .......                 {BOLD}║{RESET} Version         0.1.0rc1 {BOLD}║{RESET}\r
+          .......                 {BOLD}║{RESET} Version            0.1.1 {BOLD}║{RESET}\r
          ........                 {BOLD}║{RESET}                          {BOLD}║{RESET}\r
        ...................        {BOLD}║{RESET}                          {BOLD}║{RESET}\r
      ...................          {BOLD}║{RESET}                          {BOLD}║{RESET}\r
